@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaultMemoryLoop.Domain\FaultMemoryLoop.Domain.csproj" />
+    <ProjectReference Include="..\FaultMemoryLoop.Application\FaultMemoryLoop.Application.csproj" />
+  </ItemGroup>
+
+  <!-- No PackageReferences yet. Microsoft.Extensions.AI + Gemini land in
+       AiServices/ once triage extraction is built; the JWT signing package
+       lands in AuthServices/ once authentication is built. Both are
+       deliberately absent from this commit. -->
+
+</Project>

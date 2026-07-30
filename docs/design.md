@@ -4,14 +4,24 @@
 
 ## Tech stack at a glance
 
-**Built:** .NET 10 · ASP.NET Core Minimal APIs · Microsoft.Extensions.AI +
-Gemini · Serilog · FluentValidation · rate limiting · Scalar · consistent
-`ApiResponse<T>` envelope · base entity audit fields · Dockerfile.
+*Note: this section describes the intended full build. It's being delivered
+commit by commit — see the repo's commit history for what's actually
+landed at any given point; the current commit is structure only (Domain /
+Application / Infrastructure / Api projects, one health endpoint), with AI
+and authentication each arriving as their own separate, focused commits.*
+
+**Built (across the full sequence):** .NET 10 · layered Clean Architecture (Domain / Application /
+Infrastructure / Api as real projects, `.slnx` solution) · ASP.NET Core
+Minimal APIs · Microsoft.Extensions.AI + Gemini · Serilog · FluentValidation ·
+rate limiting · Scalar · JWT issuance and validation (adviser-protected
+triage endpoint) · consistent `ApiResponse<T>` envelope · base entity audit
+fields · a real Markdown-backed job repository · Dockerfile.
 
 **Deliberately deferred, and documented as a production roadmap instead:**
-CQRS + MediatR · JWT/OAuth 2 · repository abstraction · AutoMapper · Scrutor ·
-full multi-project Clean Architecture · Blazor + MudBlazor frontend (with
-charts) + Refit · Docker Compose + Render deployment.
+a full external identity provider (Entra ID, Auth0) behind the JWT layer ·
+CQRS + MediatR · a generic repository base abstraction · AutoMapper · Scrutor ·
+Blazor + MudBlazor frontend (with charts) + Refit · Docker Compose + Render
+deployment.
 
 Full reasoning for every choice is in **Section 4** below.
 
@@ -152,9 +162,16 @@ matters: the quality and honesty of the AI triage and retrieval itself.
   of feature.
 - **Scalar** for interactive API docs — current, lightweight, and a better default
   than Swagger UI for a new project in 2026.
-- **Lightweight layering**: Domain / Application / Infrastructure / Api as folders
-  within a single project, showing separation of concerns without the overhead of
-  a multi-assembly Clean Architecture solution a 3-hour tool doesn't need yet.
+- **Layered Clean Architecture** as four real projects — `Domain` (zero
+  dependencies), `Application` (interfaces, DTOs, validators — depends only on
+  Domain), `Infrastructure` (implements Application's ports, owns the AI
+  package dependencies), `Api` (thin presentation layer, wires DI). The
+  dependency rule is enforced by the project references themselves, not just
+  convention — `Domain` and `Application` cannot accidentally take a
+  dependency on `Infrastructure` or `Api`, because there's no project
+  reference path for the compiler to allow it.
+- **`.slnx` solution file** (the current .NET 10 default XML-based format,
+  replacing the old GUID-laden `.sln`) tying all five projects together.
 - **A base entity** (`Id`, `CreatedAt`, `CreatedBy`, `UpdatedAt`, `UpdatedBy`) for
   the resolved-job record, so audit trail is there from the first record onward.
 - **Evaluation harness**: a small script that runs the held-out test set through
@@ -172,17 +189,21 @@ budget stays spent on the AI quality problem rather than infrastructure ceremony
 - **CQRS + MediatR** — earns its place once there are enough distinct
   commands/queries (and cross-cutting concerns like validation-as-pipeline-
   behaviour) that the indirection pays for itself; premature here with ~3
-  operations.
-- **JWT + OAuth 2** — essential for a real multi-adviser, multi-shop deployment;
-  deliberately not built for a take-home a reviewer needs to run in minutes
-  without standing up an identity provider.
+  operations. The layered project structure keeps this easy to introduce
+  later without a rewrite, if the operation count grows.
+- **JWT vs. a full external identity provider — worth distinguishing.** JWT
+  issuance and validation is built: the triage endpoint requires a valid
+  token, and tokens are properly signed and verified, not decorative. What's
+  deferred is the identity provider behind it — right now, a single shared
+  secret stands in for a real per-adviser credential store, which is an
+  honest simplification for a reviewer to run in minutes, not a production
+  posture. A real deployment would swap the credential check in
+  `AuthEndpoints.cs` for delegation to Entra ID, Auth0, or similar, while the
+  JWT validation on the API side barely changes.
 - **Base repository abstraction** — worth it once there's a real database behind
   the Markdown store; premature while the store is flat files.
 - **AutoMapper**, **Scrutor** — genuinely useful once the object graph and DI
   registrations grow past what's easy to see by eye; not yet needed at this size.
-- **Full multi-project Clean Architecture** — right call once multiple teams or
-  bounded contexts touch the codebase; a single well-organised project is the
-  honest choice at this scale.
 - **Blazor + MudBlazor frontend, with charts, and Refit as the typed client** —
   the natural next step so an adviser has a real screen instead of an API call,
   and charts would genuinely help visualise retrieval confidence and historical

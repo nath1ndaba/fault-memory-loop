@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaultMemoryLoop.Domain\FaultMemoryLoop.Domain.csproj" />
+  </ItemGroup>
+
+  <!-- No PackageReferences yet — FluentValidation lands here once there's
+       a request DTO to validate. -->
+
+</Project>

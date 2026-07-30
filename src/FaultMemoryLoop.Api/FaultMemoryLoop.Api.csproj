@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- General API tooling, not tied to any specific feature -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
+    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
+    <PackageReference Include="Scalar.AspNetCore" Version="1.2.74" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FaultMemoryLoop.Application\FaultMemoryLoop.Application.csproj" />
+    <ProjectReference Include="..\FaultMemoryLoop.Infrastructure\FaultMemoryLoop.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

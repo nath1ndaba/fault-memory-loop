@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FaultMemoryLoop.Domain/FaultMemoryLoop.Domain.csproj" />
+    <Project Path="src/FaultMemoryLoop.Application/FaultMemoryLoop.Application.csproj" />
+    <Project Path="src/FaultMemoryLoop.Infrastructure/FaultMemoryLoop.Infrastructure.csproj" />
+    <Project Path="src/FaultMemoryLoop.Api/FaultMemoryLoop.Api.csproj" />
+    <Project Path="src/FaultMemoryLoop.Eval/FaultMemoryLoop.Eval.csproj" />
+  </Folder>
+</Solution>

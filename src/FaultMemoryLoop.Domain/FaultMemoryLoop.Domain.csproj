@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Deliberately zero PackageReferences and zero ProjectReferences.
+       The Domain layer depends on nothing else in this solution and
+       nothing external — that's the dependency rule. Currently empty:
+       entities land here once a feature needs them (see docs/schema.md
+       for what's coming). -->
+
+</Project>
