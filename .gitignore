@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# .NET build output
+bin/
+obj/
+out/
+
+# IDE
+.vs/
+.vscode/
+*.user
+
+# OS
+.DS_Store
