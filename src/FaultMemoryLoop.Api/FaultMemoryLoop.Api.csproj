@@ -9,9 +9,13 @@
 
   <ItemGroup>
     <!-- General API tooling, not tied to any specific feature -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.10" />
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.3" />
-    <PackageReference Include="Scalar.AspNetCore" Version="1.2.74" />
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Scalar.AspNetCore" Version="2.16.16" />
+
+    <!-- .env loading for local development -->
+    <PackageReference Include="DotNetEnv" Version="3.2.0" />
   </ItemGroup>
 
   <ItemGroup>

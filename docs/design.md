@@ -6,9 +6,12 @@
 
 *Note: this section describes the intended full build. It's being delivered
 commit by commit — see the repo's commit history for what's actually
-landed at any given point; the current commit is structure only (Domain /
-Application / Infrastructure / Api projects, one health endpoint), with AI
-and authentication each arriving as their own separate, focused commits.*
+landed at any given point. As of the current commit: structure (Domain /
+Application / Infrastructure / Api projects) plus real authentication —
+two independent login paths (Google OAuth2/OIDC verification, and email/
+password against a real Employee table via EF Core + SQLite), both issuing
+the same shape of JWT, protecting `/api/auth/me`. AI extraction is
+deliberately on hold and lands in its own later commit.*
 
 **Built (across the full sequence):** .NET 10 · layered Clean Architecture (Domain / Application /
 Infrastructure / Api as real projects, `.slnx` solution) · ASP.NET Core

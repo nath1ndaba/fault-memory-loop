@@ -12,25 +12,71 @@ time, with an honest confidence score instead of a guess.
 
 ## Status
 
-🚧 Structural skeleton only. This commit is the layered Clean Architecture
-(Domain / Application / Infrastructure / Api) with a single health-check
-endpoint, proving the pipeline runs — logging, rate limiting, API docs, all
-wired. No AI and no authentication yet; both land in their own commits on
-top of this.
+🚧 Structure + authentication. Real JWT issuance, Google OAuth2/OIDC
+verification, and email/password login (Employee table via EF Core +
+SQLite) — two independent ways to get a token, both issuing the same shape
+of JWT. No AI yet; that's on hold and lands in its own commit later.
 
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- `dotnet-ef` tool (`dotnet tool install --global dotnet-ef`) — needed once,
+  to generate the database migration (see below)
+- A Google OAuth 2.0 Client ID, if you want to test the Google login path
+  (Google Cloud Console → APIs & Services → Credentials → Create
+  Credentials → OAuth Client ID → Web application)
 
 ## Setup
 
 1. Clone the repo.
-2. Run the API:
+2. Copy `.env.example` to `.env` and fill in a JWT signing key (and a
+   Google Client ID if testing that path):
+   ```
+   JWT_SIGNING_KEY=a-long-random-string-at-least-32-chars
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   ```
+3. Generate the database migration (one-time — see
+   `src/FaultMemoryLoop.Infrastructure/Migrations/README.md`):
+   ```
+   cd src/FaultMemoryLoop.Infrastructure
+   dotnet ef migrations add InitialCreate --startup-project ../FaultMemoryLoop.Api
+   cd ../..
+   ```
+4. Run the API:
    ```
    dotnet run --project src/FaultMemoryLoop.Api
    ```
-3. Open the interactive API docs at the URL printed on startup (served via
+   The SQLite database and `Employees` table are created automatically on
+   first run.
+5. Open the interactive API docs at the URL printed on startup (served via
    Scalar), or hit `GET /health` directly to confirm it's running.
+
+## Two ways to log in
+
+**Option 1 — Google sign-in.** There's no sign-in page yet, so the simplest
+way to get a real Google ID token to test with is
+[Google's OAuth 2.0 Playground](https://developers.google.com/oauthplayground/):
+authorize against your own Client ID, then use the ID token it returns.
+```
+POST /api/auth/google
+{ "idToken": "<the Google ID token>" }
+```
+
+**Option 2 — email + password.**
+```
+POST /api/auth/register
+{ "email": "adviser@example.com", "password": "at-least-10-characters" }
+
+POST /api/auth/login
+{ "email": "adviser@example.com", "password": "at-least-10-characters" }
+```
+
+Both options return the same shape of token. Either way:
+```
+GET /api/auth/me
+Authorization: Bearer <token>
+```
+confirms the whole chain works end to end.
 
 ## Project structure
 

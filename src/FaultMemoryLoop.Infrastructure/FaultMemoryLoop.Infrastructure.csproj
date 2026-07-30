@@ -7,13 +7,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- JWT issuance and signing -->
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.22.0" />
+
+    <!-- Google ID token verification (the OAuth2/OIDC piece) -->
+    <PackageReference Include="Google.Apis.Auth" Version="1.75.0" />
+
+    <!-- Employee table (email/password login) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!-- Microsoft.Extensions.AI + Gemini deliberately not referenced yet —
+       AI extraction is on hold, lands in AiServices/ in its own commit. -->
+
+  <ItemGroup>
     <ProjectReference Include="..\FaultMemoryLoop.Domain\FaultMemoryLoop.Domain.csproj" />
     <ProjectReference Include="..\FaultMemoryLoop.Application\FaultMemoryLoop.Application.csproj" />
   </ItemGroup>
-
-  <!-- No PackageReferences yet. Microsoft.Extensions.AI + Gemini land in
-       AiServices/ once triage extraction is built; the JWT signing package
-       lands in AuthServices/ once authentication is built. Both are
-       deliberately absent from this commit. -->
 
 </Project>

@@ -1,6 +1,11 @@
 # Secrets
 .env
 
+# Local SQLite database
+*.db
+*.db-shm
+*.db-wal
+
 # .NET build output
 bin/
 obj/
