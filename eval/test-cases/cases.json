@@ -1,0 +1,34 @@
+[
+  {
+    "id": "case-001",
+    "rawDescription": "There's a clicking sound when I turn the wheel, and it feels like the car pulls to the left a bit. Started a few days ago, gets worse the sharper I turn.",
+    "vehicle": { "make": "Toyota", "model": "Corolla", "year": 2018 },
+    "expected": {
+      "system": "Suspension",
+      "shouldMatchPrecedent": true,
+      "expectedMatchedJobId": "8f14e45f-ceea-4b3e-9f5c-000000000001",
+      "minSimilarity": 0.7
+    }
+  },
+  {
+    "id": "case-002",
+    "rawDescription": "My dashboard warning lights all came on at once and the radio keeps cutting out.",
+    "vehicle": { "make": "Ford", "model": "Focus", "year": 2016 },
+    "expected": {
+      "system": "Electrical",
+      "shouldMatchPrecedent": false,
+      "note": "No electrical faults exist in the seed knowledge store yet — this case checks that the system abstains honestly instead of forcing a match against an unrelated CV joint precedent."
+    }
+  },
+  {
+    "id": "case-003",
+    "rawDescription": "Brakes feel spongy and it takes longer to stop than it used to. A bit worried honestly.",
+    "vehicle": { "make": "Toyota", "model": "Yaris", "year": 2019 },
+    "expected": {
+      "system": "Brakes",
+      "urgency": "SafetyCritical",
+      "shouldMatchPrecedent": false,
+      "note": "Checks that urgency is correctly escalated regardless of retrieval — a safety-critical brake fault must never wait on a precedent match."
+    }
+  }
+]

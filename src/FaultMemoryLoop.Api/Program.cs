@@ -1,3 +1,5 @@
+using System.Text;
+using System.Threading.RateLimiting;
 using DotNetEnv;
 using FaultMemoryLoop.Api.Endpoints;
 using FaultMemoryLoop.Application.Contracts;
@@ -11,8 +13,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using Serilog;
-using System.Text;
-using System.Threading.RateLimiting;
 
 // Load .env for local development. In real deployments (Render, etc.), these
 // would come from the platform's environment/secrets config instead — this
@@ -43,6 +43,7 @@ builder.Services.AddRateLimiter(options =>
 // --- Validation ----------------------------------------------------------
 builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
 builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
+builder.Services.AddScoped<IValidator<TriageRequest>, TriageRequestValidator>();
 
 // --- Auth configuration ---------------------------------------------------
 var jwtSigningKey = builder.Configuration["JWT_SIGNING_KEY"]
@@ -65,6 +66,21 @@ const string jwtAudience = "FaultMemoryLoop.Api";
 builder.Services.AddAuthenticationServices(
     jwtSigningKey, jwtIssuer, jwtAudience, googleClientId, sqliteConnectionString);
 
+// --- AI configuration ------------------------------------------------------
+var geminiApiKey = builder.Configuration["GEMINI_API_KEY"]
+    ?? Environment.GetEnvironmentVariable("GEMINI_API_KEY")
+    ?? throw new InvalidOperationException(
+        "GEMINI_API_KEY is not set. Copy .env.example to .env and add your key.");
+
+var geminiModel = builder.Configuration["GEMINI_MODEL"]
+    ?? Environment.GetEnvironmentVariable("GEMINI_MODEL")
+    ?? "gemini-3.6-flash";
+
+var knowledgeStorePath = Path.Combine(
+    builder.Environment.ContentRootPath, "..", "..", "knowledge-store", "jobs");
+
+builder.Services.AddAiServices(geminiApiKey,geminiModel, knowledgeStorePath);
+
 // Real JWT validation — not a stand-in. Only tokens this system itself
 // issued (via /api/auth/google or /api/auth/login) will pass this check.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -83,6 +99,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
@@ -106,6 +126,7 @@ app.MapScalarApiReference(); // serves interactive docs at /scalar
 
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
+app.MapTriageEndpoints();
 
 // Auto-open the Scalar docs after a successful local launch.
 if (app.Environment.IsDevelopment())

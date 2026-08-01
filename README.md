@@ -12,10 +12,10 @@ time, with an honest confidence score instead of a guess.
 
 ## Status
 
-🚧 Structure + authentication. Real JWT issuance, Google OAuth2/OIDC
-verification, and email/password login (Employee table via EF Core +
-SQLite) — two independent ways to get a token, both issuing the same shape
-of JWT. No AI yet; that's on hold and lands in its own commit later.
+✅ Structure, authentication, and AI triage extraction are all in. JWT
+issuance, Google OAuth2/OIDC verification, email/password login (Employee
+table via EF Core + SQLite), and now real Gemini-backed fault triage with
+a Markdown-backed knowledge store that grows with every resolved job.
 
 ## Prerequisites
 
@@ -25,15 +25,17 @@ of JWT. No AI yet; that's on hold and lands in its own commit later.
 - A Google OAuth 2.0 Client ID, if you want to test the Google login path
   (Google Cloud Console → APIs & Services → Credentials → Create
   Credentials → OAuth Client ID → Web application)
+- A Gemini API key ([Google AI Studio](https://aistudio.google.com/apikey))
 
 ## Setup
 
 1. Clone the repo.
-2. Copy `.env.example` to `.env` and fill in a JWT signing key (and a
-   Google Client ID if testing that path):
+2. Copy `.env.example` to `.env` and fill in a JWT signing key, a Google
+   Client ID if testing that path, and your Gemini API key:
    ```
    JWT_SIGNING_KEY=a-long-random-string-at-least-32-chars
    GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GEMINI_API_KEY=your-key-here
    ```
 3. Generate the database migration (one-time — see
    `src/FaultMemoryLoop.Infrastructure/Migrations/README.md`):
@@ -78,22 +80,43 @@ Authorization: Bearer <token>
 ```
 confirms the whole chain works end to end.
 
+## Submitting a fault for triage
+
+Requires a bearer token from either login option above.
+
+```
+POST /api/triage
+Authorization: Bearer <token>
+{
+  "rawDescription": "clicking sound when turning, pulls slightly left, started a few days ago",
+  "vehicle": { "make": "Toyota", "model": "Corolla", "year": 2018 },
+  "createdBy": "adviser-jsmith"
+}
+```
+
+Returns a structured `TriageRecord` — likely system, fault category,
+urgency, symptom tags, and clarifying questions the adviser can ask on the
+spot. There's already one seeded resolved job in `knowledge-store/jobs/`
+(a CV joint case matching this exact example) for retrieval to eventually
+match against — retrieval itself isn't wired into this endpoint yet, only
+extraction is.
+
 ## Project structure
 
 ```
 src/
-  FaultMemoryLoop.Domain/          entities, enums, value objects — currently empty
-  FaultMemoryLoop.Application/     interfaces, contracts, validators — currently empty
-  FaultMemoryLoop.Infrastructure/  AI services, repositories, auth — currently empty
+  FaultMemoryLoop.Domain/          entities, enums, value objects, models
+  FaultMemoryLoop.Application/     interfaces, contracts, validators
+  FaultMemoryLoop.Infrastructure/  AI services, repositories, auth, persistence
   FaultMemoryLoop.Api/             minimal API, endpoints, DI wiring
-  FaultMemoryLoop.Eval/            evaluation harness — placeholder
+  FaultMemoryLoop.Eval/            evaluation harness — scoring not yet implemented
 docs/
   design.md                 problem framing, scenario, architecture rationale
-  schema.md                 the data contracts the next commits build against
+  schema.md                 the data contracts everything is built against
 eval/
-  test-cases/                will hold the held-out fault descriptions used for scoring
+  test-cases/                held-out fault descriptions used for scoring
 knowledge-store/
-  jobs/                      will hold resolved job records (Markdown), once that feature lands
+  jobs/                      resolved job records (Markdown), grows over time
 ```
 
 ## License

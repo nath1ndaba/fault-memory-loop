@@ -1,19 +1,22 @@
 using FaultMemoryLoop.Application.Interfaces;
+using FaultMemoryLoop.Infrastructure.AiServices;
 using FaultMemoryLoop.Infrastructure.AuthServices;
 using FaultMemoryLoop.Infrastructure.Persistence;
 using FaultMemoryLoop.Infrastructure.Repositories;
+using GeminiDotnet;
+using GeminiDotnet.Extensions.AI;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FaultMemoryLoop.Infrastructure;
 
 /// <summary>
-/// Wires authentication into DI — both login paths. Program.cs calls this
-/// one method rather than knowing about JWT signing details, Google's
-/// verification library, or the database connection string directly.
-///
-/// AI services are deliberately not registered here yet — that's a separate
-/// commit, on hold for now (see docs/design.md).
+/// One extension method per concern, mirroring how Program.cs is organised —
+/// each method wires exactly one feature area into DI, and vendor-specific
+/// types (Gemini, Google, JWT signing details, the SQLite connection
+/// string) stay encapsulated here rather than leaking into the composition
+/// root.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
@@ -39,4 +42,19 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    public static IServiceCollection AddAiServices(
+    this IServiceCollection services, string geminiApiKey, string geminiModel, string knowledgeStorePath)
+    {
+        services.AddSingleton<IChatClient>(_ =>
+            new GeminiChatClient(new GeminiClientOptions { ApiKey = geminiApiKey, ModelId = geminiModel }));
+
+        services.AddScoped<ITriageExtractionService, GeminiTriageExtractionService>();
+
+        services.AddSingleton<IJobRecordRepository>(_ =>
+            new MarkdownJobRecordRepository(knowledgeStorePath));
+
+        return services;
+    }
+
 }

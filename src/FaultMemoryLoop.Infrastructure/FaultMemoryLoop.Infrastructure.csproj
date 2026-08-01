@@ -19,11 +19,24 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-	  <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
-  </ItemGroup>
 
-  <!-- Microsoft.Extensions.AI + Gemini deliberately not referenced yet —
-       AI extraction is on hold, lands in AiServices/ in its own commit. -->
+    <!-- EF Core's SQLite provider transitively pulls a deprecated,
+         vulnerable native SQLite build (GHSA-2m69-gcr7-jv3q, tracked
+         upstream at dotnet/efcore#38257, unresolved as of this writing).
+         SQLitePCLRaw.lib.e_sqlite3's version number directly tracks the
+         SQLite engine version it bundles, unlike SQLitePCLRaw.bundle_e_sqlite3
+         (a separate package with its own low version numbers) — pinning
+         THIS package directly is the confirmed community workaround.
+         Remove once EF Core ships a fix. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
+
+    <!-- Model-agnostic AI abstraction -->
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.8.3" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" Version="10.8.3" />
+
+    <!-- Gemini provider under the Microsoft.Extensions.AI abstraction -->
+    <PackageReference Include="GeminiDotnet.Extensions.AI" Version="0.25.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FaultMemoryLoop.Domain\FaultMemoryLoop.Domain.csproj" />

@@ -7,11 +7,14 @@
 *Note: this section describes the intended full build. It's being delivered
 commit by commit — see the repo's commit history for what's actually
 landed at any given point. As of the current commit: structure (Domain /
-Application / Infrastructure / Api projects) plus real authentication —
-two independent login paths (Google OAuth2/OIDC verification, and email/
-password against a real Employee table via EF Core + SQLite), both issuing
-the same shape of JWT, protecting `/api/auth/me`. AI extraction is
-deliberately on hold and lands in its own later commit.*
+Application / Infrastructure / Api projects), authentication (Google
+OAuth2/OIDC + email/password, both issuing JWTs, protecting `/api/triage`
+and `/api/auth/me`), and real Gemini-backed triage extraction —
+`POST /api/triage` turns a customer's raw description into a structured
+`TriageRecord`. Retrieval against the knowledge store (matching a new
+fault to past resolved jobs) is not wired into the endpoint yet — the
+seed record and eval test cases exist, but the confidence-gated matching
+logic itself is a still-later step.*
 
 **Built (across the full sequence):** .NET 10 · layered Clean Architecture (Domain / Application /
 Infrastructure / Api as real projects, `.slnx` solution) · ASP.NET Core
