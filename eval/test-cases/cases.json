@@ -4,7 +4,7 @@
     "rawDescription": "There's a clicking sound when I turn the wheel, and it feels like the car pulls to the left a bit. Started a few days ago, gets worse the sharper I turn.",
     "vehicle": { "make": "Toyota", "model": "Corolla", "year": 2018 },
     "expected": {
-      "system": "Suspension",
+      "system": "Steering",
       "shouldMatchPrecedent": true,
       "expectedMatchedJobId": "8f14e45f-ceea-4b3e-9f5c-000000000001",
       "minSimilarity": 0.7
@@ -17,7 +17,7 @@
     "expected": {
       "system": "Electrical",
       "shouldMatchPrecedent": false,
-      "note": "No electrical faults exist in the seed knowledge store yet — this case checks that the system abstains honestly instead of forcing a match against an unrelated CV joint precedent."
+      "note": "No electrical faults exist in the seed knowledge store yet — this case checks that the system abstains honestly instead of forcing a match against an unrelated job."
     }
   },
   {
