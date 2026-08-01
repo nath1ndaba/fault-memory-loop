@@ -1,5 +1,6 @@
 using FaultMemoryLoop.Application.Interfaces;
 using FaultMemoryLoop.Domain.Entities;
+using FaultMemoryLoop.Domain.Enums;
 using FaultMemoryLoop.Domain.ValueObjects;
 
 namespace FaultMemoryLoop.Infrastructure.Repositories;
@@ -63,6 +64,8 @@ public class MarkdownJobRecordRepository(string knowledgeStorePath) : IJobRecord
           model: {record.Vehicle.Model}
           year: {record.Vehicle.Year}
         originalTriage: {record.OriginalTriageId}
+        system: {record.System}
+        symptomTags: [{string.Join(", ", record.SymptomTags)}]
         actualDiagnosis: {record.ActualDiagnosis}
         actualFix: {record.ActualFix}
         partsUsed: [{string.Join(", ", record.PartsUsed)}]
@@ -92,6 +95,16 @@ public class MarkdownJobRecordRepository(string knowledgeStorePath) : IJobRecord
                 map[key] = value;
             }
 
+            var symptomTags = map.GetValueOrDefault("symptomTags", "[]")
+                .Trim('[', ']')
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
+
+            var system = Enum.TryParse<VehicleSystem>(
+                map.GetValueOrDefault("system"), ignoreCase: true, out var parsedSystem)
+                ? parsedSystem
+                : VehicleSystem.Unknown;
+
             record = new ResolvedJobRecord(
                 Id: Guid.Parse(map["id"]),
                 CreatedAt: DateTimeOffset.Parse(map["createdAt"]),
@@ -104,6 +117,8 @@ public class MarkdownJobRecordRepository(string knowledgeStorePath) : IJobRecord
                     int.TryParse(map.GetValueOrDefault("year"), out var year) ? year : null,
                     null),
                 OriginalTriageId: Guid.Parse(map["originalTriage"]),
+                System: system,
+                SymptomTags: symptomTags,
                 ActualDiagnosis: map["actualDiagnosis"],
                 ActualFix: map["actualFix"],
                 PartsUsed: [],

@@ -9,6 +9,8 @@ vehicle:
   model: Corolla
   year: 2018
 originalTriage: 8f14e45f-ceea-4b3e-9f5c-100000000001
+system: Steering
+symptomTags: [clicking-noise, pulls-left, noise-when-turning]
 actualDiagnosis: Worn CV joint, driver's side
 actualFix: Replaced CV joint assembly, repacked with new grease boot
 partsUsed: ["CV joint assembly - driver side", "CV boot kit"]

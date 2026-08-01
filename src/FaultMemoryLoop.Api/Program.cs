@@ -44,6 +44,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<IValidator<RegisterRequest>, RegisterRequestValidator>();
 builder.Services.AddScoped<IValidator<LoginRequest>, LoginRequestValidator>();
 builder.Services.AddScoped<IValidator<TriageRequest>, TriageRequestValidator>();
+builder.Services.AddScoped<IValidator<ResolveJobRequest>, ResolveJobRequestValidator>();
 
 // --- Auth configuration ---------------------------------------------------
 var jwtSigningKey = builder.Configuration["JWT_SIGNING_KEY"]
@@ -79,7 +80,7 @@ var geminiModel = builder.Configuration["GEMINI_MODEL"]
 var knowledgeStorePath = Path.Combine(
     builder.Environment.ContentRootPath, "..", "..", "knowledge-store", "jobs");
 
-builder.Services.AddAiServices(geminiApiKey,geminiModel, knowledgeStorePath);
+builder.Services.AddAiServices(geminiApiKey, geminiModel, knowledgeStorePath);
 
 // Real JWT validation — not a stand-in. Only tokens this system itself
 // issued (via /api/auth/google or /api/auth/login) will pass this check.
@@ -127,6 +128,7 @@ app.MapScalarApiReference(); // serves interactive docs at /scalar
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapTriageEndpoints();
+app.MapJobEndpoints();
 
 // Auto-open the Scalar docs after a successful local launch.
 if (app.Environment.IsDevelopment())

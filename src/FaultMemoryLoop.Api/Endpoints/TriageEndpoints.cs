@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FaultMemoryLoop.Application.Contracts;
 using FaultMemoryLoop.Application.Interfaces;
 using FluentValidation;
@@ -17,6 +18,7 @@ public static class TriageEndpoints
             TriageRequest request,
             IValidator<TriageRequest> validator,
             ITriageExtractionService extractionService,
+            IRetrievalService retrievalService,
             CancellationToken ct) =>
         {
             var validation = await validator.ValidateAsync(request, ct);
@@ -26,13 +28,15 @@ public static class TriageEndpoints
                 return Results.Ok(ApiResponse<object>.Fail(errors));
             }
 
-            var record = await extractionService.ExtractAsync(
+            var triage = await extractionService.ExtractAsync(
                 request.RawDescription, request.Vehicle, request.CreatedBy, ct);
 
-            return Results.Ok(ApiResponse<object>.Ok(record));
+            var suggestion = await retrievalService.FindSimilarAsync(triage, ct);
+
+            return Results.Ok(ApiResponse<TriageResponse>.Ok(new TriageResponse(triage, suggestion)));
         })
         .WithName("SubmitTriage")
         .WithSummary("Submit a customer's raw fault description for triage.")
-        .Produces<ApiResponse<object>>(StatusCodes.Status200OK);
+        .Produces<ApiResponse<TriageResponse>>(StatusCodes.Status200OK);
     }
 }

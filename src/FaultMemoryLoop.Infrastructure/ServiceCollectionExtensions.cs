@@ -3,6 +3,7 @@ using FaultMemoryLoop.Infrastructure.AiServices;
 using FaultMemoryLoop.Infrastructure.AuthServices;
 using FaultMemoryLoop.Infrastructure.Persistence;
 using FaultMemoryLoop.Infrastructure.Repositories;
+using FaultMemoryLoop.Infrastructure.Retrieval;
 using GeminiDotnet;
 using GeminiDotnet.Extensions.AI;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,8 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IJobRecordRepository>(_ =>
             new MarkdownJobRecordRepository(knowledgeStorePath));
+
+        services.AddScoped<IRetrievalService, TagOverlapRetrievalService>();
 
         return services;
     }
