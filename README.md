@@ -1,28 +1,30 @@
 # Fault Memory Loop
 
-A small tool that helps a garage service adviser turn a customer's free-text
-description of a car fault into a structured triage record — and, where the
-shop has seen a similar fault before, surfaces what actually fixed it last
-time, with an honest confidence score instead of a guess.
+A tool that helps a garage service adviser turn a customer's free-text
+description of a car fault into a structured triage record — and, where
+the shop has seen a similar fault before, surfaces what actually fixed it
+last time, with an honest confidence score instead of a guess.
 
-> **Why this exists, the scenario it's built for, and the architecture
-> decisions behind it** are documented separately in
-> [`docs/design.md`](docs/design.md). This README is deliberately just the
-> practical "how to run it" — read the design doc for the thinking.
+> **Why this exists, the scenario it's built for, the architecture
+> decisions, and an honest note on scope** are documented separately in
+> [`docs/design.md`](docs/design.md) — read that for the thinking.
+> [`docs/schema.md`](docs/schema.md) documents every request/response
+> shape in detail.
 
 ## Status
 
-✅ Structure, authentication, and AI triage extraction are all in. JWT
-issuance, Google OAuth2/OIDC verification, email/password login (Employee
-table via EF Core + SQLite), and now real Gemini-backed fault triage with
-a Markdown-backed knowledge store that grows with every resolved job.
+✅ Complete core loop: layered Clean Architecture, dual authentication
+(Google OAuth2/OIDC + email/password), real Gemini-backed triage
+extraction, retrieval against a growing Markdown knowledge store, and a
+real evaluation harness. See `docs/design.md` for an honest note on how
+far this went beyond the exercise's stated scope.
 
 ## Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- `dotnet-ef` tool (`dotnet tool install --global dotnet-ef`) — needed once,
-  to generate the database migration (see below)
-- A Google OAuth 2.0 Client ID, if you want to test the Google login path
+- `dotnet-ef` tool (`dotnet tool install --global dotnet-ef`) — one-time,
+  for the database migration
+- A Google OAuth 2.0 Client ID, to test the Google login path
   (Google Cloud Console → APIs & Services → Credentials → Create
   Credentials → OAuth Client ID → Web application)
 - A Gemini API key ([Google AI Studio](https://aistudio.google.com/apikey))
@@ -30,15 +32,15 @@ a Markdown-backed knowledge store that grows with every resolved job.
 ## Setup
 
 1. Clone the repo.
-2. Copy `.env.example` to `.env` and fill in a JWT signing key, a Google
-   Client ID if testing that path, and your Gemini API key:
+2. Copy `.env.example` to `.env` (inside `src/FaultMemoryLoop.Api/`) and
+   fill in your values:
    ```
    JWT_SIGNING_KEY=a-long-random-string-at-least-32-chars
    GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
-   GEMINI_API_KEY=your-key-here
+   GEMINI_API_KEY=your-gemini-key
+   GEMINI_MODEL=gemini-3.6-flash
    ```
-3. Generate the database migration (one-time — see
-   `src/FaultMemoryLoop.Infrastructure/Migrations/README.md`):
+3. Generate the database migration (one-time):
    ```
    cd src/FaultMemoryLoop.Infrastructure
    dotnet ef migrations add InitialCreate --startup-project ../FaultMemoryLoop.Api
@@ -49,22 +51,19 @@ a Markdown-backed knowledge store that grows with every resolved job.
    dotnet run --project src/FaultMemoryLoop.Api
    ```
    The SQLite database and `Employees` table are created automatically on
-   first run.
-5. Open the interactive API docs at the URL printed on startup (served via
-   Scalar), or hit `GET /health` directly to confirm it's running.
+   first run, and Scalar opens automatically.
 
 ## Two ways to log in
 
-**Option 1 — Google sign-in.** There's no sign-in page yet, so the simplest
-way to get a real Google ID token to test with is
-[Google's OAuth 2.0 Playground](https://developers.google.com/oauthplayground/):
-authorize against your own Client ID, then use the ID token it returns.
+**Google sign-in** — get a test ID token via
+[Google's OAuth 2.0 Playground](https://developers.google.com/oauthplayground/)
+against your own Client ID:
 ```
 POST /api/auth/google
 { "idToken": "<the Google ID token>" }
 ```
 
-**Option 2 — email + password.**
+**Email + password**:
 ```
 POST /api/auth/register
 { "email": "adviser@example.com", "password": "at-least-10-characters" }
@@ -73,16 +72,15 @@ POST /api/auth/login
 { "email": "adviser@example.com", "password": "at-least-10-characters" }
 ```
 
-Both options return the same shape of token. Either way:
+Both return the same shape of token. Confirm it works:
 ```
 GET /api/auth/me
 Authorization: Bearer <token>
 ```
-confirms the whole chain works end to end.
 
 ## Submitting a fault for triage
 
-Requires a bearer token from either login option above.
+Requires a bearer token from either login option.
 
 ```
 POST /api/triage
@@ -94,12 +92,43 @@ Authorization: Bearer <token>
 }
 ```
 
-Returns a structured `TriageRecord` — likely system, fault category,
-urgency, symptom tags, and clarifying questions the adviser can ask on the
-spot. There's already one seeded resolved job in `knowledge-store/jobs/`
-(a CV joint case matching this exact example) for retrieval to eventually
-match against — retrieval itself isn't wired into this endpoint yet, only
-extraction is.
+Returns a `TriageRecord` (system, category, urgency, symptom tags,
+clarifying questions) plus a `RetrievalSuggestion` — either a cited match
+from a past resolved job, or an honest "no precedent found."
+
+## Closing the loop
+
+Once a technician confirms the real diagnosis and fix:
+
+```
+POST /api/jobs/resolve
+Authorization: Bearer <token>
+{
+  "originalTriageId": "<id from the triage response>",
+  "vehicle": { "make": "Toyota", "model": "Corolla", "year": 2018 },
+  "system": "Steering",
+  "symptomTags": ["clicking-noise", "pulls-left"],
+  "actualDiagnosis": "Worn CV joint, driver's side",
+  "actualFix": "Replaced CV joint assembly",
+  "partsUsed": ["CV joint assembly"],
+  "labourHours": 1.5,
+  "outcomeConfirmed": true,
+  "resolvedBy": "tech-mreid"
+}
+```
+
+This writes a new Markdown record to `knowledge-store/jobs/`, which the
+*next* matching triage call will find.
+
+## Running the evaluation harness
+
+```bash
+dotnet run --project src/FaultMemoryLoop.Eval
+```
+
+Runs the real triage + retrieval pipeline (not a mock) against
+`eval/test-cases/cases.json`, reporting retrieval precision, abstention
+correctness, and hallucination rate. Uses the same `.env` as the API.
 
 ## Project structure
 
@@ -107,12 +136,12 @@ extraction is.
 src/
   FaultMemoryLoop.Domain/          entities, enums, value objects, models
   FaultMemoryLoop.Application/     interfaces, contracts, validators
-  FaultMemoryLoop.Infrastructure/  AI services, repositories, auth, persistence
+  FaultMemoryLoop.Infrastructure/  AI services, retrieval, repositories, auth, persistence
   FaultMemoryLoop.Api/             minimal API, endpoints, DI wiring
-  FaultMemoryLoop.Eval/            evaluation harness — scoring not yet implemented
+  FaultMemoryLoop.Eval/            evaluation harness — real scoring, not a placeholder
 docs/
-  design.md                 problem framing, scenario, architecture rationale
-  schema.md                 the data contracts everything is built against
+  design.md                 problem framing, scenario, architecture, honest scope note
+  schema.md                 every data contract in the system
 eval/
   test-cases/                held-out fault descriptions used for scoring
 knowledge-store/

@@ -21,7 +21,7 @@ using Microsoft.Extensions.AI;
 //                               a cited past job
 
 var repoRoot = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..");
-Env.Load(Path.Combine(repoRoot, ".env"));
+Env.Load(Path.Combine(repoRoot, "src", "FaultMemoryLoop.Api", ".env"));
 
 var geminiApiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY")
     ?? throw new InvalidOperationException("GEMINI_API_KEY not set — copy .env.example to .env at the repo root.");
